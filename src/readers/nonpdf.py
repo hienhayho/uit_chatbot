@@ -6,6 +6,7 @@ import cv2
 import argparse
 import requests
 import numpy as np
+from tqdm import tqdm
 from pathlib import Path
 from dotenv import load_dotenv
 from docx import Document
@@ -15,6 +16,7 @@ from functools import cmp_to_key
 from sklearn.cluster import MeanShift
 from docx.enum.style import WD_STYLE_TYPE
 from pdf2image import convert_from_bytes
+from llama_index.core import Document as LlamaIndexDocument
 
 CHAR_PER_LINE = 159 #font size 13   line width 1300
 
@@ -81,7 +83,7 @@ def textline_detect(img):
 
     return response["predicts"][0]
 
-def convert_single(fpath, document):
+def convert_single(fpath, document, document_page):
     
     img = cv2.imread(fpath)
     imgh, imgw, _ = img.shape
@@ -111,24 +113,29 @@ def convert_single(fpath, document):
     for i in range(len(line_group_list)):
         line_group_list[i] = sorted(line_group_list[i], key=itemgetter(4))
     
-#    for cluster in line_group_list:
-#        for line in cluster:
-#            img = cv2.putText(img, str(line_group_list.index(cluster)), (int(line[4]), int(line[5])), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2, cv2.LINE_AA)
-#    cv2.imwrite("out.jpg", img)
+    # for cluster in line_group_list:
+    #     for line in cluster:
+    #         img = cv2.putText(img, str(line_group_list.index(cluster)), (int(line[4]), int(line[5])), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2, cv2.LINE_AA)
+    # cv2.imwrite("out.jpg", img)
 
     
     
     font_styles = document.styles
+    font_styles_page = document_page.styles
     comments_style = 'CommentsStyle_%s' %uuid.uuid4()
     font_charstyle = font_styles.add_style(comments_style, WD_STYLE_TYPE.CHARACTER)
+    font_charstyle = font_styles_page.add_style(comments_style, WD_STYLE_TYPE.CHARACTER)
     font_object = font_charstyle.font
     font_object.size = Pt(13)
     font_object.name = 'Times New Roman'
     
     style = document.styles['Normal']
+    style_page = document_page.styles['Normal']
     style.paragraph_format.line_spacing = 1
+    style_page.paragraph_format.line_spacing = 1
     
 #    
+    docs_page = ""
     for cluster in line_group_list:
         sentence = ""
         latest_roi_width = 0
@@ -156,9 +163,15 @@ def convert_single(fpath, document):
             sentence += tmp_sentence
             latest_roi_width = x2
         parag = document.add_paragraph()
+        parag_page = document_page.add_paragraph()
         parag.style = 'Body Text'
+        parag_page.style = 'Body Text'
         parag.add_run(sentence, style=comments_style)
-
+        parag_page.add_run(sentence, style=comments_style)
+        docs_page += parag.text
+        
+    return docs_page
+        
 def convert(fpath, file_out):
     imgpaths = []
     imgs = convert_from_bytes(open(fpath, "rb").read())
@@ -172,13 +185,24 @@ def convert(fpath, file_out):
     
     document = Document()
     
+    documents_return: list[LlamaIndexDocument] = []
+    
     for imgpath in imgpaths:
-        # print(imgpath)
-        convert_single(imgpath, document)
+        document_page = Document()
+        docs_page = convert_single(imgpath, document, document_page)
+        documents_return.append(
+            LlamaIndexDocument(
+                text=docs_page,
+                metadata={
+                    "file_name": Path(imgpath).name,
+                }
+            )
+        )
         os.remove(imgpath)
     
-    document.save(file_out)
+    # document.save(file_out)
     # return document
+    return documents_return
     
 # if __name__ == "__main__":    
 #     args = parse_args()
@@ -187,13 +211,14 @@ def convert(fpath, file_out):
     
 #     Path(fopath).mkdir(parents=True, exist_ok=True)
     
-#     for file_pdf in Path(fpath).iterdir():
-#         file_pdf = Path("data/475-qd-dhcntt_20-8-2018_qui_dinh_ve_tieu_chuan_giang_vien_giang_day_mon_hoc_va_tro_giang_mon_hoc.pdf")
+#     for file_pdf in tqdm(Path(fpath).iterdir(), total=len(list(Path(fpath).iterdir()))):
+#         # file_pdf = Path("data/cv842_27-5-2023_huong_dan_in_noi_dung_tren_vb_mau_ban_hanh_nam_2017.pdf")
 #         file_out = Path(fopath) / (file_pdf.stem + ".docx")
-#         print(file_pdf)
-#         print(file_out)
+#         # print(file_pdf)
+#         # print(file_out)
 #         start_time = time.time()
 #         convert(str(file_pdf), str(file_out))
 #         print(f"Convert {file_pdf} to {file_out} in {time.time()-start_time} seconds")
-#         break
+#         time.sleep(120)
+#         # break
     

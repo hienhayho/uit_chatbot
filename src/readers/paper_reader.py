@@ -1,4 +1,4 @@
-import asyncio
+import time
 from tqdm import tqdm
 from icecream import ic
 from pathlib import Path
@@ -100,11 +100,23 @@ def llama_parse_read_paper(paper_dir: Path | str) -> list[Document]:
 
     ic(valid_files)
 
-    file_extractor = {".pdf": ThuaNNPdfReader(), ".docx": DocxReader()}
-    
-    documents = SimpleDirectoryReader(
-        input_files=valid_files, file_extractor=file_extractor
-    ).load_data(show_progress=True, num_workers=1)
+    parser = ThuaNNPdfReader()
+
+    documents: list[Document] = []
+
+    for file_path in tqdm(valid_files):
+        docs = parser.load_data(file_path)
+        print(docs[0])
+        documents.extend(docs)
+        ic(file_path, len(docs))
+        print("pause for 120 seconds")
+        time.sleep(120)
+
+    # file_extractor = {".pdf": ThuaNNPdfReader(), ".docx": DocxReader()}
+
+    # documents = SimpleDirectoryReader(
+    #     input_files=valid_files, file_extractor=file_extractor
+    # ).load_data(show_progress=True, num_workers=1)
 
     ic(len(documents))
 
