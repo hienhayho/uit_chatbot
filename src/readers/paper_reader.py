@@ -105,12 +105,13 @@ def llama_parse_read_paper(paper_dir: Path | str) -> list[Document]:
     documents: list[Document] = []
 
     for file_path in tqdm(valid_files):
+        ic(file_path)
         docs = parser.load_data(file_path)
-        print(docs[0])
+        print(docs[0].text)
         documents.extend(docs)
-        ic(file_path, len(docs))
-        print("pause for 120 seconds")
-        time.sleep(120)
+        ic(len(docs))
+        # print("pause for 120 seconds")
+        # time.sleep(120)
 
     # file_extractor = {".pdf": ThuaNNPdfReader(), ".docx": DocxReader()}
 

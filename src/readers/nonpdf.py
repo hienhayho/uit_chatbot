@@ -65,9 +65,13 @@ def text_reg(imgs):
         f.append(("binary_files", file_bytes))
 
     response = requests.post(VIETOCR_URL, files=f)
-    response = response.json()
-    # print(response)
-    return response["predicts"]
+    try:
+        response = response.json()
+        # print(response)
+        return response["predicts"]
+    except Exception as e:
+        print(response)
+        raise e
 
 def textline_detect(img):
     TEXTLINE_URL = (
@@ -168,7 +172,7 @@ def convert_single(fpath, document, document_page):
         parag_page.style = 'Body Text'
         parag.add_run(sentence, style=comments_style)
         parag_page.add_run(sentence, style=comments_style)
-        docs_page += parag.text
+        docs_page += "\n" +  parag.text
         
     return docs_page
         
