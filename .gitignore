@@ -14,8 +14,10 @@ llama_index_ttam/
 test_data/
 test_out_docx/
 models/
-scripts/
+html_data/
 quydinh_huongdan.zip
+link_html.txt
 .cache
 .env.production
 output_folder/
+test_read.py

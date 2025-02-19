@@ -1,6 +1,5 @@
 import os
 import uuid
-import time
 import cv2
 import argparse
 import requests
@@ -14,7 +13,6 @@ from rich.progress import (
     TaskProgressColumn,
     TimeRemainingColumn,
 )
-from tqdm import tqdm
 from pathlib import Path
 from dotenv import load_dotenv
 from docx import Document
@@ -178,9 +176,9 @@ def convert_single(fpath, document, document_page):
 
         reg_result_list = text_reg(roi_list)
         # if not isinstance(reg_result_list, list):
-            # print("File img bug: ", fpath)
-            # print("Continue ---------- Bug in text_reg func")
-            # continue
+        # print("File img bug: ", fpath)
+        # print("Continue ---------- Bug in text_reg func")
+        # continue
         for reg_result in reg_result_list:
             text = reg_result["str"]
             tmp_sentence += "%s" % text

@@ -332,7 +332,6 @@ class RAG:
         show_progess: bool = True,
         type: Literal["origin", "contextual"] = "contextual",
     ):
-
         if type == "origin":
             collection_name = self.setting.original_rag_collection_name
         else:

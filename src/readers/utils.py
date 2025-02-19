@@ -21,6 +21,7 @@ def check_valid_extenstion(file_path: str | Path) -> bool:
     """
     return Path(file_path).suffix in SUPPORTED_FILE_EXTENSIONS
 
+
 def check_valid_link(link: str) -> bool:
     """
     Check if the link is supported
@@ -63,6 +64,7 @@ def get_files_from_folder_or_file_paths(files_or_folders: list[str]) -> list[str
                 logger.warning(f"Unsupported file extension: {file_or_folder}")
 
     return files
+
 
 def get_files_from_list_links(links: list[str]) -> list[str]:
     """

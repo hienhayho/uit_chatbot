@@ -1,8 +1,6 @@
-import os
 import uvicorn
-from typing import Annotated
 
-from fastapi import APIRouter, FastAPI, Body
+from fastapi import APIRouter, FastAPI
 from fastapi.responses import JSONResponse
 
 from src.embedding import RAG
@@ -16,6 +14,7 @@ router = APIRouter()
 setting = Settings()
 rag = RAG(setting)
 
+
 @router.get("/")
 async def get_root() -> str:
     return JSONResponse(content={"message": "Hello World"})
@@ -23,9 +22,12 @@ async def get_root() -> str:
 
 @router.post("/query")
 async def get_query(query_request: QueryRequest) -> str:
-    res, filenames, results_content = rag.contextual_rag_search(query_request.content, debug=True)
+    res, filenames, results_content = rag.contextual_rag_search(
+        query_request.content, debug=True
+    )
     print(f"result: {res}")
     return JSONResponse(content={"result": res})
+
 
 app.include_router(router)
 

@@ -8,9 +8,7 @@
 # print(result.text_content)
 
 
-from tqdm import tqdm
 from pathlib import Path
-from docx import Document
 from docling.document_converter import DocumentConverter
 
 
@@ -49,7 +47,11 @@ link_html = [
 
 parent_path = Path("html_data")
 parent_path.mkdir(exist_ok=True)
-    
-result = converter.convert_all(["https://tuyensinh.uit.edu.vn/vi-sao-ban-nen-chon-truong-dai-hoc-cong-nghe-thong-tin-dhqg-hcm"])
+
+result = converter.convert_all(
+    [
+        "https://tuyensinh.uit.edu.vn/vi-sao-ban-nen-chon-truong-dai-hoc-cong-nghe-thong-tin-dhqg-hcm"
+    ]
+)
 for doc in result:
     print(doc.document.export_to_markdown())

@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 import uuid
 from tqdm import tqdm
 from pathlib import Path
@@ -253,7 +252,7 @@ class RAG:
                         "doc_id": doc_id,
                         "file_name": chunk.metadata["file_name"],
                         **chunk.metadata,
-                    }
+                    },
                 ),
             )
             documents_metadata.append(
@@ -339,7 +338,6 @@ class RAG:
         show_progess: bool = True,
         type: Literal["origin", "contextual"] = "contextual",
     ):
-
         if type == "origin":
             collection_name = self.setting.original_rag_collection_name
         else:
@@ -428,7 +426,7 @@ class RAG:
             type (Literal["origin", "contextual", "both"]): The type to ingest. Default to `contextual`.
         """
         raw_documents = llama_parse_read_paper(folder_dir)
-        
+
         splited_documents = self.split_document(raw_documents)
 
         ingest_documents: list[Document] = []
@@ -553,10 +551,9 @@ class RAG:
                 pass
             semantic_doc_id.append(node.metadata["doc_id"])
 
-            
         logger.info("BM25 Querying ...")
         bm25_results = self.es.search(query, k=k)
-        
+
         bm25_doc_id = []
         for result in bm25_results:
             try:
@@ -611,7 +608,7 @@ class RAG:
                     score=score,
                 )
             )
-            
+
             results_content.append(content)
 
         if debug:
@@ -627,7 +624,7 @@ class RAG:
         logger.info("Reranking ...")
 
         retrieved_nodes = self.reranker.postprocess_nodes(combined_nodes, query_bundle)
-        
+
         filenames, contexts = set(), []
         for n in retrieved_nodes:
             try:
@@ -635,7 +632,7 @@ class RAG:
                 contexts.append(n.node.text)
             except:
                 pass
-            
+
         messages = [
             ChatMessage(
                 role="system",

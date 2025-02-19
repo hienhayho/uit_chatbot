@@ -7,6 +7,7 @@ from schemas import SupportDependencies, SupportResult
 
 url_api = os.getenv("SYSTEM_API")
 
+
 async def response_system(query: str):
     res = requests.post(url_api, json={"content": query})
     response = res.json()["result"]
@@ -76,7 +77,7 @@ async def run(message: cl.Message):
             result = support_agent.run_sync(
                 message.content, message_history=message_history
             ).data
-            
+
             print("result: ", result)
 
         query = result.response
@@ -91,8 +92,7 @@ async def run(message: cl.Message):
         await msg.send()
 
         update_message_history("assistant", response)
-        
-        
+
     except AssertionError as e:
         print("ERROR: AssertionError encountered:", e)
     except Exception as e:

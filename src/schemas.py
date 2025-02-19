@@ -106,6 +106,7 @@ class SupportResult(BaseModel):
     response: str
     # check_topic: bool
 
+
 class QueryRequest(BaseModel):
     """
     Query request schema.

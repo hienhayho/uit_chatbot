@@ -1,5 +1,3 @@
-import time
-import random
 from tqdm import tqdm
 from icecream import ic
 from pathlib import Path
@@ -9,12 +7,8 @@ from llama_parse import LlamaParse
 import google.generativeai as genai
 from llama_index.core import Document
 from llama_index.core import SimpleDirectoryReader
-from llama_index.readers.web import SimpleWebPageReader
-from llama_index.readers.file import PDFReader, DocxReader
-from llama_index.core.node_parser import TokenTextSplitter
 
-from .utils import get_files_from_folder_or_file_paths, get_formatted_logger, get_files_from_list_links
-from .nonpdf import convert
+from .utils import get_files_from_folder_or_file_paths, get_formatted_logger
 from .thuann_reader import ThuaNNPdfReader
 from .markitdown_reader import MarkItDownReader
 from .docling_reader import DoclingReader
@@ -106,27 +100,26 @@ def llama_parse_read_paper(paper_dir: Path | str | list[str]) -> list[Document]:
         paper_dir = Path(paper_dir)
 
         valid_files = get_files_from_folder_or_file_paths([paper_dir])
-        
+
         ic(valid_files)
 
         parser_pdf = ThuaNNPdfReader()
         parser_md = MarkItDownReader()
 
-
         reader = SimpleDirectoryReader(
-            input_files=valid_files, file_extractor={".pdf": parser_pdf, ".docx": parser_md}
+            input_files=valid_files,
+            file_extractor={".pdf": parser_pdf, ".docx": parser_md},
         )
 
         docs = reader.load_data(show_progress=True)
         documents.extend(docs)
-
 
     else:
         # valid_links = get_files_from_list_links(paper_dir)
 
         valid_links = paper_dir
         ic(valid_links)
-        
+
         parser_web = DoclingReader()
         for link in valid_links:
             print("link: ", link)
@@ -134,7 +127,7 @@ def llama_parse_read_paper(paper_dir: Path | str | list[str]) -> list[Document]:
             documents.extend(doc)
             print(documents)
             input("Press Enter to continue...")
-        
+
     return documents
 
 

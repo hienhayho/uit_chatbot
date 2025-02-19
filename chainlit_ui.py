@@ -11,7 +11,7 @@ async def response_system(query: str):
     res, filenames, results_content = await cl.make_async(agent.contextual_rag_search)(
         query
     )
-    
+
     print("response_system: ", res)
     return SupportResult(response=res)
 
@@ -93,8 +93,7 @@ async def run(message: cl.Message):
         await msg.send()
 
         update_message_history("assistant", response)
-        
-        
+
     except AssertionError as e:
         print("ERROR: AssertionError encountered:", e)
     except Exception as e:

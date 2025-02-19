@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Optional, List, Dict
 from docling.document_converter import DocumentConverter
 
@@ -22,7 +21,7 @@ class DoclingReader(BaseReader):
         settings = Settings()
 
         document = DocumentConverter().convert_all(link)
-        
+
         for idxs, doc in enumerate(document):
             doc = doc.document.export_to_markdown()
 
@@ -36,7 +35,10 @@ class DoclingReader(BaseReader):
                 documents.append(
                     Document(
                         text=doc.text,
-                        metadata={"file_name": link[idxs].split("/")[-1], "page_number": idx + 1},
+                        metadata={
+                            "file_name": link[idxs].split("/")[-1],
+                            "page_number": idx + 1,
+                        },
                     )
                 )
 
