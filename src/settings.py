@@ -54,12 +54,29 @@ class Settings(BaseModel):
         ),
     )
 
+    # original_rag_collection_name: str = Field(
+    #     description="The original RAG collection name", default="original_rag"
+    # )
+
+    # original_rag_collection_name: str = Field(
+    #     description="The original RAG collection name", default="original_rag_test"
+    # )
+
     original_rag_collection_name: str = Field(
-        description="The original RAG collection name", default="original_rag"
+        description="The original RAG collection name", default="original_rag_tuyensinh"
     )
 
+    # contextual_rag: collection name for db not have metadata
+    # contextual_rag_collection_name: str = Field(
+    #     description="The contextual RAG collection name", default="contextual_rag"
+    # )
+    # contextual_rag_collection_name: str = Field(
+    #     description="The contextual RAG collection name", default="contextual_rag_test"
+    # )
+
     contextual_rag_collection_name: str = Field(
-        description="The contextual RAG collection name", default="contextual_rag"
+        description="The contextual RAG collection name",
+        default="contextual_rag_tuyensinh",
     )
 
     qdrant_url: str = Field(
@@ -69,11 +86,24 @@ class Settings(BaseModel):
     elastic_search_url: str = Field(
         description="The Elastic URL", default=os.getenv("ELASTIC_SEARCH_URL")
     )
+    # elastic_search_index_name: str = Field(
+    #     description="The Elastic index name", default="contextual_rag_full"
+    # )
+
+    # elastic_search_index_name: str = Field(
+    #     description="The Elastic index name", default="contextual_rag_full_test"
+    # )
+
     elastic_search_index_name: str = Field(
-        description="The Elastic index name", default="contextual_rag"
+        description="The Elastic index name", default="contextual_rag_full_tuyensinh"
     )
+
     num_chunks_to_recall: int = Field(
         description="The number of chunks to recall", default=150
+    )
+
+    num_token_split_docx: int = Field(
+        description="The number of token to split docx file", default=1024
     )
 
     # Reference: https://github.com/anthropics/anthropic-cookbook/blob/main/skills/contextual-embeddings/guide.ipynb

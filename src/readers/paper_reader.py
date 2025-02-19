@@ -1,4 +1,5 @@
 import time
+import random
 from tqdm import tqdm
 from icecream import ic
 from pathlib import Path
@@ -7,14 +8,19 @@ from dotenv import load_dotenv
 from llama_parse import LlamaParse
 import google.generativeai as genai
 from llama_index.core import Document
-from llama_index.readers.file import PDFReader, DocxReader
 from llama_index.core import SimpleDirectoryReader
+from llama_index.readers.web import SimpleWebPageReader
+from llama_index.readers.file import PDFReader, DocxReader
+from llama_index.core.node_parser import TokenTextSplitter
 
-from .utils import get_files_from_folder_or_file_paths
+from .utils import get_files_from_folder_or_file_paths, get_formatted_logger, get_files_from_list_links
 from .nonpdf import convert
 from .thuann_reader import ThuaNNPdfReader
+from .markitdown_reader import MarkItDownReader
+from .docling_reader import DoclingReader
 
 load_dotenv()
+logger = get_formatted_logger(__name__)
 
 
 def gemini_read_paper_content(
@@ -83,7 +89,7 @@ def gemini_read_paper_content_single_file(file_path: Path | str) -> Document:
     return Document(text=response.text)
 
 
-def llama_parse_read_paper(paper_dir: Path | str) -> list[Document]:
+def llama_parse_read_paper(paper_dir: Path | str | list[str]) -> list[Document]:
     """
     Read the content of the paper using  LlamaParse.
 
@@ -94,33 +100,41 @@ def llama_parse_read_paper(paper_dir: Path | str) -> list[Document]:
     """
     ic(paper_dir)
 
-    paper_dir = Path(paper_dir)
-
-    valid_files = get_files_from_folder_or_file_paths([paper_dir])
-
-    ic(valid_files)
-
-    parser = ThuaNNPdfReader()
-
     documents: list[Document] = []
 
-    for file_path in tqdm(valid_files):
-        ic(file_path)
-        docs = parser.load_data(file_path)
-        print(docs[0].text)
+    if not isinstance(paper_dir, list):
+        paper_dir = Path(paper_dir)
+
+        valid_files = get_files_from_folder_or_file_paths([paper_dir])
+        
+        ic(valid_files)
+
+        parser_pdf = ThuaNNPdfReader()
+        parser_md = MarkItDownReader()
+
+
+        reader = SimpleDirectoryReader(
+            input_files=valid_files, file_extractor={".pdf": parser_pdf, ".docx": parser_md}
+        )
+
+        docs = reader.load_data(show_progress=True)
         documents.extend(docs)
-        ic(len(docs))
-        # print("pause for 120 seconds")
-        # time.sleep(120)
 
-    # file_extractor = {".pdf": ThuaNNPdfReader(), ".docx": DocxReader()}
 
-    # documents = SimpleDirectoryReader(
-    #     input_files=valid_files, file_extractor=file_extractor
-    # ).load_data(show_progress=True, num_workers=1)
+    else:
+        # valid_links = get_files_from_list_links(paper_dir)
 
-    ic(len(documents))
-
+        valid_links = paper_dir
+        ic(valid_links)
+        
+        parser_web = DoclingReader()
+        for link in valid_links:
+            print("link: ", link)
+            doc = parser_web.load_data([link])
+            documents.extend(doc)
+            print(documents)
+            input("Press Enter to continue...")
+        
     return documents
 
 

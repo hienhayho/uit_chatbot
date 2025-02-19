@@ -13,7 +13,7 @@ def load_parser():
     parser.add_argument(
         "--folder_dir",
         type=str,
-        help="Path to the folder containing the documents",
+        help="Path to the folder containing the documents or path to the file containing links",
     )
     parser.add_argument(
         "--type",
@@ -30,7 +30,14 @@ def main():
 
     rag = RAG(setting=setting)
 
-    rag.run_ingest(folder_dir=args.folder_dir, type=args.type)
+    if args.folder_dir.endswith(".txt"):
+        with open(args.folder_dir, "r") as f:
+            links = f.readlines()
+            links = [link.strip() for link in links]
+            print(links)
+        rag.run_ingest(folder_dir=links, type=args.type)
+    else:
+        rag.run_ingest(folder_dir=args.folder_dir, type=args.type)
 
 
 if __name__ == "__main__":

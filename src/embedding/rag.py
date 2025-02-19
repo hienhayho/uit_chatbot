@@ -532,6 +532,8 @@ class RAG:
 
         nodes = semantic_results.source_nodes
 
+        print(nodes[0])
+
         semantic_doc_id = [node.metadata["doc_id"] for node in nodes]
 
         bm25_results = self.bm25s.search(query, k=k)

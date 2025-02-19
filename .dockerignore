@@ -1,0 +1,14 @@
+**pycache**
+.chainlit
+.github
+.ruff_cache
+assets
+llama_index_ttam
+output_folder
+scripts
+test_data
+test_out_docx
+.cache
+.env.example
+quydinh_huongdan.zip
+README.md

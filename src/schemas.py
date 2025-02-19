@@ -28,6 +28,7 @@ class DocumentMetadata(BaseModel):
     """
 
     doc_id: str
+    file_name: str
     original_content: str
     contextualized_content: str
 
@@ -44,6 +45,7 @@ class ElasticSearchResponse(BaseModel):
     """
 
     doc_id: str
+    file_name: str
     content: str
     contextualized_content: str
     score: float
@@ -79,3 +81,37 @@ class EmbeddingConfig(BaseModel):
 class RerankerConfig(BaseModel):
     service: RerankerService
     model: str | None
+
+
+class SupportDependencies(BaseModel):
+    """
+    Support dependencies schema.
+
+    Attributes:
+        query (str): Query.
+    """
+
+    query: str
+
+
+class SupportResult(BaseModel):
+    """
+    Support result schema.
+
+    Attributes:
+        response (str): Response.
+        # check_topic (bool): Check topic user ask related to topic in database chatbot.
+    """
+
+    response: str
+    # check_topic: bool
+
+class QueryRequest(BaseModel):
+    """
+    Query request schema.
+
+    Attributes:
+        content (str): Content of the query.
+    """
+
+    content: str

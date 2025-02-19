@@ -11,4 +11,5 @@ QA_PROMPT = """We have provided context information below.
 ---------------------
 {context_str}"
 ---------------------
-Given this information, please answer the question: {query_str}"""
+Given this information, please answer the question: {query_str}
+If you don't have enough information to answer the question, please answer: Xin lỗi, tôi không đủ thông tin để trả lời câu hỏi này."""

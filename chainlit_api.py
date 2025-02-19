@@ -1,19 +1,17 @@
+import os
+import requests
 import chainlit as cl
 from pydantic_ai import Agent, Tool
 
-from src.embedding import RAG
-from src.settings import Settings
-from src.schemas import SupportDependencies, SupportResult
+from schemas import SupportDependencies, SupportResult
 
+url_api = os.getenv("SYSTEM_API")
 
 async def response_system(query: str):
-    agent = cl.user_session.get("agent")
-    res, filenames, results_content = await cl.make_async(agent.contextual_rag_search)(
-        query
-    )
-    
-    print("response_system: ", res)
-    return SupportResult(response=res)
+    res = requests.post(url_api, json={"content": query})
+    response = res.json()["result"]
+    print("response_system: ", response)
+    return SupportResult(response=response)
 
 
 support_agent = Agent(
@@ -58,29 +56,29 @@ async def set_starters():
     ]
 
 
-@cl.on_chat_start
-async def start():
-    agent = RAG(setting=Settings())
-    cl.user_session.set("agent", agent)
+# @cl.on_chat_start
+# async def start():
+#     agent = RAG(setting=Settings())
+#     cl.user_session.set("agent", agent)
 
 
 @cl.on_message
 async def run(message: cl.Message):
     try:
+        print("message: ", message.content)
         update_message_history("user", message.content)
 
         message_history = get_message_history()
 
         if len(message_history) == 0:
-            # print("This is the first message")
             result = support_agent.run_sync(message.content).data
         else:
-            # print("This is not the first message")
             result = support_agent.run_sync(
                 message.content, message_history=message_history
             ).data
+            
+            print("result: ", result)
 
-        # result = support_agent.run_sync(message.content, message_history=message_history).data
         query = result.response
 
         msg = cl.Message(content="", author="Assistant")
@@ -99,15 +97,3 @@ async def run(message: cl.Message):
         print("ERROR: AssertionError encountered:", e)
     except Exception as e:
         print("ERROR: Unexpected error:", e)
-
-    # agent = cl.user_session.get("agent")
-    # res, filenames, results_content = await cl.make_async(agent.contextual_rag_search)(message.content)
-
-    # msg = cl.Message(content="", author="Assistant")
-    # response = ""
-
-    # for token in res:
-    #     response += token + " "
-    #     await msg.stream_token(token)
-
-    # await msg.send()

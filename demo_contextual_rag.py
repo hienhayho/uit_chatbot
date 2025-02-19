@@ -1,5 +1,4 @@
 import argparse
-import sys
 import threading
 from src.embedding import RAG
 from src.settings import setting
@@ -22,7 +21,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 # q = args.q
-q = "Phạm vi điều chỉnh, đối tượng áp dụng"
+q = "Chương trình học ngành khoa học máy tính"
 
 rag = RAG(setting)
 

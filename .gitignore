@@ -17,3 +17,5 @@ models/
 scripts/
 quydinh_huongdan.zip
 .cache
+.env.production
+output_folder/

@@ -67,6 +67,7 @@ class ElasticSearch:
                 "_index": self.index_name,
                 "_source": {
                     "doc_id": metadata.doc_id,
+                    "file_name": metadata.file_name,
                     "content": metadata.original_content,
                     "contextualized_content": metadata.contextualized_content,
                 },
@@ -112,6 +113,8 @@ class ElasticSearch:
         return [
             ElasticSearchResponse(
                 doc_id=hit["_source"]["doc_id"],
+                # file_name=hit["_source"]["file_name"],
+                file_name="",
                 content=hit["_source"]["content"],
                 contextualized_content=hit["_source"]["contextualized_content"],
                 score=hit["_score"],

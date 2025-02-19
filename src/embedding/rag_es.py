@@ -106,7 +106,7 @@ class RAG:
             buffer_size=1, breakpoint_percentile_threshold=95, embed_model=embed_model
         )
 
-        self.qdrant_client = QdrantClient(url=setting.qdrant_url)
+        self.qdrant_client = QdrantClient(url=setting.qdrant_url, port=None)
 
         self.es = ElasticSearch(
             url=setting.elastic_search_url, index_name=setting.elastic_search_index_name
@@ -148,7 +148,7 @@ class RAG:
             return Groq(model=model, api_key=os.getenv("GROQ_API_KEY"))
         elif service == LLMService.GEMINI:
             return Gemini(model=model, api_key=os.getenv("GEMINI_API_KEY"))
-    
+
         else:
             raise ValueError("Service not supported.")
 
@@ -187,9 +187,6 @@ class RAG:
         Returns:
             list[list[Document]]: List of documents after splitting.
         """
-        if isinstance(document, Document):
-            document = [document]
-
         assert isinstance(document, list)
 
         documents: list[list[Document]] = []
@@ -198,7 +195,12 @@ class RAG:
 
         for doc in document:
             nodes = self.splitter.get_nodes_from_documents([doc])
-            documents.append([Document(text=node.get_content()) for node in nodes])
+            documents.append(
+                [
+                    Document(text=node.get_content(), metadata=node.metadata)
+                    for node in nodes
+                ]
+            )
 
         return documents
 
@@ -247,14 +249,17 @@ class RAG:
             documents.append(
                 Document(
                     text=new_chunk,
-                    metadata=dict(
-                        doc_id=doc_id,
-                    ),
+                    metadata={
+                        "doc_id": doc_id,
+                        "file_name": chunk.metadata["file_name"],
+                        **chunk.metadata,
+                    }
                 ),
             )
             documents_metadata.append(
                 DocumentMetadata(
                     doc_id=doc_id,
+                    file_name=chunk.metadata["file_name"],
                     original_content=whole_document,
                     contextualized_content=contextualized_content,
                 ),
@@ -289,6 +294,8 @@ class RAG:
             document, metadata = self.add_contextual_content(
                 raw_document, splited_document
             )
+            print(document[0].text)
+            print(document[0].metadata)
             documents.extend(document)
             documents_metadata.extend(metadata)
 
@@ -421,6 +428,7 @@ class RAG:
             type (Literal["origin", "contextual", "both"]): The type to ingest. Default to `contextual`.
         """
         raw_documents = llama_parse_read_paper(folder_dir)
+        
         splited_documents = self.split_document(raw_documents)
 
         ingest_documents: list[Document] = []
@@ -515,9 +523,11 @@ class RAG:
             str: The search results.
         """
         logger.info("query: %s", query)
-        
+
         semantic_weight = self.setting.semantic_weight
         bm25_weight = self.setting.bm25_weight
+
+        print("Qdrant client: ", self.qdrant_client)
 
         index = self.get_qdrant_vector_store_index(
             self.qdrant_client, self.setting.contextual_rag_collection_name
@@ -533,14 +543,27 @@ class RAG:
         logger.info("Querying ...")
         semantic_results: Response = query_engine.query(query)
 
+        dict_filename = {}
+        semantic_doc_id = []
         nodes = semantic_results.source_nodes
+        for node in nodes:
+            try:
+                dict_filename[node.metadata["doc_id"]] = node.metadata["file_name"]
+            except:
+                pass
+            semantic_doc_id.append(node.metadata["doc_id"])
 
-        semantic_doc_id = [node.metadata["doc_id"] for node in nodes]
-
+            
         logger.info("BM25 Querying ...")
         bm25_results = self.es.search(query, k=k)
-
-        bm25_doc_id = [result.doc_id for result in bm25_results]
+        
+        bm25_doc_id = []
+        for result in bm25_results:
+            try:
+                dict_filename[result.doc_id] = result.file_name
+            except:
+                pass
+            bm25_doc_id.append(result.doc_id)
 
         combined_nodes: list[NodeWithScore] = []
 
@@ -556,6 +579,7 @@ class RAG:
         bm25_count = 0
         semantic_count = 0
         both_count = 0
+        results_content = []
         for id in combined_ids:
             score = 0
             content = ""
@@ -583,10 +607,12 @@ class RAG:
 
             combined_nodes.append(
                 NodeWithScore(
-                    node=TextNode(text=content),
+                    node=TextNode(text=content, metadata={"doc_id": id}),
                     score=score,
                 )
             )
+            
+            results_content.append(content)
 
         if debug:
             logger.info(
@@ -601,11 +627,15 @@ class RAG:
         logger.info("Reranking ...")
 
         retrieved_nodes = self.reranker.postprocess_nodes(combined_nodes, query_bundle)
-
-        contexts = [n.node.text for n in retrieved_nodes]
-
-        print(contexts)
-
+        
+        filenames, contexts = set(), []
+        for n in retrieved_nodes:
+            try:
+                filenames.add(dict_filename[n.node.metadata["doc_id"]])
+                contexts.append(n.node.text)
+            except:
+                pass
+            
         messages = [
             ChatMessage(
                 role="system",
@@ -614,7 +644,7 @@ class RAG:
             ChatMessage(
                 role="user",
                 content=QA_PROMPT.format(
-                    context_str=json.dumps(contexts),
+                    context_str="\n\n".join(contexts),
                     query_str=query,
                 ),
             ),
@@ -622,4 +652,4 @@ class RAG:
 
         response = self.llm.chat(messages).message.content
 
-        return response
+        return response, filenames, results_content
